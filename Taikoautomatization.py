@@ -1,124 +1,85 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
-# Путь к chromedriver (укажи свой)
-CHROMEDRIVER_PATH = "/path/to/chromedriver"
-
-# Настройки Chrome
-options = Options()
-options.add_argument("--start-maximized")  # Развернуть браузер
-options.add_experimental_option("detach", True)  # Оставить браузер открытым после выполнения
-
-# Запуск Chrome через Selenium
-service = Service(CHROMEDRIVER_PATH)
-driver = webdriver.Chrome(service=service, options=options)
+# Подключаемся к открытому Chrome
+# Можно сделать через chromedriver, но в моем случае легче через открытый Chrome
+chrome_options = webdriver.ChromeOptions()
+chrome_options.debugger_address = "127.0.0.1:9222"
+driver = webdriver.Chrome(options=chrome_options)
+wait = WebDriverWait(driver, 10)
 
 try:
     # 1️⃣ Открываем сайт
     driver.get("https://ritsu.xyz/")
-    time.sleep(5)
-
-    # 2️⃣ Подключаем Rabby Wallet
-    connect_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подключить кошелек')]")
+    
+    # 2️⃣ Нажимаем кнопку "Connect"
+    connect_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Connect')]")))
     connect_button.click()
-    time.sleep(3)
-
-    # 3️⃣ Ждем открытия Rabby Wallet
-    time.sleep(5)
-    all_windows = driver.window_handles
-    driver.switch_to.window(all_windows[1])
-
-    # 4️⃣ Подключаем кошелек
-    connect_wallet_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подключить')]")
-    connect_wallet_button.click()
-    time.sleep(3)
-
-    # 5️⃣ Переключаемся обратно на сайт
-    driver.switch_to.window(all_windows[0])
+    print("✅ Кнопка 'Connect' нажата")
     time.sleep(2)
 
-    # 6️⃣ Делаем 20 обменов ETH → WETH
+    # 3️⃣ Выбираем Rabby Wallet
+    wallet_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Rabby Wallet')]")))
+    wallet_button.click()
+    print("✅ 'Rabby Wallet' выбран")
+    time.sleep(2)
+
+    # 4️⃣ Нажимаем "Sign"
+    sign_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Sign')]")))
+    sign_button.click()
+    print("✅ Кнопка 'Sign' нажата")
+    time.sleep(3)
+
+    # 5️⃣ Совершаем 20 обменов ETH → WETH
     for i in range(20):
-        print(f"🔄 Обмен {i + 1}/20: ETH → WETH")
+        print(f"🔄 Обмен {i+1}/20: ETH → WETH")
 
-        # Нажимаем кнопку "Отправить"
-        send_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Отправить')]")
-        send_button.click()
-        time.sleep(3)
+        # Ввод ETH
+        eth_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Enter amount']")))
+        eth_input.clear()
+        eth_input.send_keys("0.0001")
 
-        # Вводим сумму 0.0001 ETH
-        amount_input = driver.find_element(By.XPATH, "//input[@type='number']")
-        amount_input.clear()
-        amount_input.send_keys("0.0001")
+        # Нажимаем кнопку "Swap"
+        swap_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Swap')]")))
+        swap_button.click()
         time.sleep(2)
 
-        # Подтверждаем отправку
-        confirm_send_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подтвердить')]")
-        confirm_send_button.click()
-        time.sleep(3)
-
-        # Переключаемся в Rabby Wallet
-        driver.switch_to.window(all_windows[1])
-        time.sleep(2)
-
-        # Подтверждаем транзакцию
-        confirm_transaction_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подтвердить')]")
-        confirm_transaction_button.click()
-        time.sleep(3)
-
-        # Переключаемся обратно на сайт
-        driver.switch_to.window(all_windows[0])
+        # Подтверждаем обмен
+        confirm_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Confirm Swap')]")))
+        confirm_button.click()
+        print("✅ Обмен ETH → WETH выполнен")
         time.sleep(5)
 
-        print(f"✅ Обмен {i + 1}/20 завершен!")
-
-    print("🎉 Все 20 обменов ETH → WETH выполнены!")
-
-    # 7️⃣ Делаем 20 обменов WETH → ETH
+    # 6️⃣ Совершаем 20 обменов WETH → ETH
     for i in range(20):
-        print(f"🔄 Обмен {i + 1}/20: WETH → ETH")
+        print(f"🔄 Обмен {i+1}/20: WETH → ETH")
 
-        # 🔄 Переключаем направление обмена (ищи XPATH кнопки смены)
-        switch_button = driver.find_element(By.XPATH, "//button[contains(text(), '⇄')]")
-        switch_button.click()
-        time.sleep(3)
+        # Выбираем WETH
+        weth_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'WETH')]")))
+        weth_button.click()
+        time.sleep(1)
 
-        # Нажимаем "Отправить"
-        send_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Отправить')]")
-        send_button.click()
-        time.sleep(3)
+        # Ввод WETH
+        weth_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Enter amount']")))
+        weth_input.clear()
+        weth_input.send_keys("0.0001")
 
-        # Вводим сумму 0.0001 WETH
-        amount_input = driver.find_element(By.XPATH, "//input[@type='number']")
-        amount_input.clear()
-        amount_input.send_keys("0.0001")
+        # Нажимаем кнопку "Swap"
+        swap_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Swap')]")))
+        swap_button.click()
         time.sleep(2)
 
-        # Подтверждаем отправку
-        confirm_send_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подтвердить')]")
-        confirm_send_button.click()
-        time.sleep(3)
-
-        # Переключаемся в Rabby Wallet
-        driver.switch_to.window(all_windows[1])
-        time.sleep(2)
-
-        # Подтверждаем транзакцию
-        confirm_transaction_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Подтвердить')]")
-        confirm_transaction_button.click()
-        time.sleep(3)
-
-        # Переключаемся обратно на сайт
-        driver.switch_to.window(all_windows[0])
+        # Подтверждаем обмен
+        confirm_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Confirm Swap')]")))
+        confirm_button.click()
+        print("✅ Обмен WETH → ETH выполнен")
         time.sleep(5)
 
-        print(f"✅ Обмен {i + 1}/20 завершен!")
-
-    print("🎉 Все 20 обменов WETH → ETH выполнены!")
+except Exception as e:
+    print(f"❌ Ошибка: {e}")
 
 finally:
-    time.sleep(5)
     driver.quit()
