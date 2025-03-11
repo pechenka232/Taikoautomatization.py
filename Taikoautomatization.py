@@ -7,7 +7,7 @@ import time
 # Подключаемся к открытому Chrome
 # Можно сделать через chromedriver, но в моем случае легче через открытый Chrome
 chrome_options = webdriver.ChromeOptions()
-chrome_options.debugger_address = "127.0.0.1:9222"
+chrome_options.debugger_address = ""
 driver = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(driver, 10)
 
